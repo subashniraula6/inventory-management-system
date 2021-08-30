@@ -249,8 +249,6 @@ class MainController extends AbstractController
 
     //         dump($category);
     // }
-
-
     
     // User
      /**
@@ -439,5 +437,4 @@ class MainController extends AbstractController
          );
          return new JsonResponse($response, 200); 
         }
-
 }
