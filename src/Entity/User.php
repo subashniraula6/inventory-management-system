@@ -158,6 +158,12 @@ class User
 
         return $this;
     }
+    public function removeLeftAt(): self
+    {
+        $this->leftAt = null;
+
+        return $this;
+    }
 
     public function getRole(): ?Role
     {

@@ -3,12 +3,16 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\Request as UserRequest;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Inventory;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Entity\Category;
+use App\Entity\Role;
 use App\Entity\User;
+use DateTime;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -104,8 +108,7 @@ class MainController extends AbstractController
 
             $body = $request -> getContent();            
             $inventory = $serializer->deserialize($body, Inventory::class, 'json');
-
-            dump($inventory);
+            $inventory->setCreatedAt(new DateTime('NOW'));
             
             $inventory->setCategory($category); //
 
@@ -168,7 +171,7 @@ class MainController extends AbstractController
     }
 
     /**
-     * @Route("/api/inventories/dispose/{id}", name="delete_inventory", methods={"DELETE"})
+     * @Route("/api/inventories/dispose/{id}", name="dispose_inventory", methods={"PUT"})
      */
     public function deleteInventory($id, Request $request, SerializerInterface $serializer)
     {
@@ -222,7 +225,7 @@ class MainController extends AbstractController
             
             $em = $this->getDoctrine()->getManager();
             $inventory->setStatus("new");
-            $inventory->setDisposeAt(null);
+            $inventory->removeDisposeAt();
             $em->persist($inventory);
             $em->flush();
 
@@ -329,6 +332,112 @@ class MainController extends AbstractController
                  'result' => json_decode($data)
              );
              return new JsonResponse($response, 200);
-     }
+    }
+
+    // Remove user
+     /**
+    * @Route("/api/users/remove/{id}", name="remove_user", methods={"PUT"}, requirements={"id"="\d+"})
+    */
+    public function removeUser($id, Request $request){
+        $user = $this->getDoctrine()
+                         ->getRepository(User::class)
+                         ->find($id);
+                         
+         if(empty($user)){
+             $response = array(
+                 'code' => 404,
+                 'message' => 'No posts',
+                 'errors' => null,
+                 'result' => null
+             );  
+             return new JsonResponse($response, 404);           
+         } 
+        
+         $user->setStatus("left");
+         $user->setLeftAt(new DateTime('NOW'));
+         $em = $this->getDoctrine()->getManager();
+         $em->persist($user);
+         $em->flush();
+
+
+         $response = array(
+             'code' => 200,
+             'message' => 'User removed',
+             'errors' => null,
+             'result' => null
+         );
+         return new JsonResponse($response, 200);
+
     
+        }
+
+
+    // Revive user
+     /**
+    * @Route("/api/users/revive/{id}", name="revive_user", methods={"PUT"}, requirements={"id"="\d+"})
+    */
+    public function reviveUser($id, Request $request){
+        $user = $this->getDoctrine()
+                         ->getRepository(User::class)
+                         ->find($id);
+                         
+         if(empty($user)){
+             $response = array(
+                 'code' => 404,
+                 'message' => 'No posts',
+                 'errors' => null,
+                 'result' => null
+             );  
+             return new JsonResponse($response, 404);           
+         } 
+        
+         $user->setStatus("new");
+         $user->removeLeftAt();
+         $em = $this->getDoctrine()->getManager();
+         $em->persist($user);
+         $em->flush();
+
+
+         $response = array(
+             'code' => 200,
+             'message' => 'User revived',
+             'errors' => null,
+             'result' => null
+         );
+         return new JsonResponse($response, 200); 
+        }
+
+    // Make request
+     /**
+    * @Route("/api/requests", name="make_request", methods={"POSt"})
+    */
+    public function makeRequest(Request $request, SerializerInterface $serializer){
+        $em = $this->getDoctrine()
+                         ->getManager();
+         
+        
+        $body = $request->getContent();
+         $request = $serializer->deserialize($body, UserRequest::class, 'json');
+         $request->setCreatedAt(new \DateTime("NOW"));
+         $request->setStatus('pending');
+         
+         $user = $this->getDoctrine()
+                        ->getRepository(Request::class)
+                        ->find(1);
+
+         $request->setUser($user);
+
+         $em->persist($request);
+         $em->flush();
+
+
+         $response = array(
+             'code' => 200,
+             'message' => 'Request created',
+             'errors' => null,
+             'result' => null
+         );
+         return new JsonResponse($response, 200); 
+        }
+
 }

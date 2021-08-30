@@ -45,7 +45,7 @@ class Inventory
     private $description;
 
     /**
-     * @ORM\Column(type="datetime_immutable")
+     * @ORM\Column(type="datetime")
      */
     private $createdAt;
 
@@ -135,12 +135,12 @@ class Inventory
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?\DateTime
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(\DateTime $createdAt): self
     {
         $this->createdAt = $createdAt;
 
@@ -155,6 +155,12 @@ class Inventory
     public function setDisposeAt(\DateTime $disposeAt): self
     {
         $this->disposeAt = $disposeAt;
+
+        return $this;
+    }
+    public function removeDisposeAt(): self
+    {
+        $this->disposeAt = null;
 
         return $this;
     }
